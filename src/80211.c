@@ -37,23 +37,35 @@
 const u_char *next_packet(struct pcap_pkthdr *header)
 {
 	const u_char *packet = NULL;
-
+	struct pcap_pkthdr *Pktheader = header;
+	if(!Pktheader){
+	cprintf(ERROR, "[!] NULL Pocket Header\n");
+	return Pktheader ;
+	}		
+	}		
+        packet = pcap_next(get_handle(), header);
+	if(!packet){
+	cprintf(ERROR, "[!] NULL Pocket\n");
+		return packet ;
+	}
 	/* Loop until we get a valid packet, or until we run out of packets */
-	while((packet = pcap_next(get_handle(), header)) != NULL)
+	while( packet!= NULL)
 	{
 		if(get_validate_fcs())
 		{
-			if(check_fcs(packet, header->len))
+			if(check_fcs(packet, Pktheader->len))
 			{
+				cprintf(INFO, "[!] Found packet with FCS, ...\n");
 				break;
 			}
 			else
 			{
-				cprintf(INFO, "[!] Found packet with bad FCS, skipping...\n");
+				cprintf(INFO, "[!] Found packet with Error FCS, ...\n");
 			}
 		}
 		else
 		{
+			cprintf(ERROR, "[!] Invalid FCS, ...\n");
 			break;
 		}
 	}
@@ -84,7 +96,8 @@ void read_ap_beacon()
                 packet = next_packet(&header);
                 if(packet == NULL)
                 {
-                        break;
+                       cprintf(ERROR, "[!] NULL Pocket \n");
+			break;
                 }
 
                 if(header.len >= MIN_BEACON_SIZE)
@@ -104,12 +117,12 @@ void read_ap_beacon()
 					channel = parse_beacon_tags(packet, header.len);
 					
 					/* If no channel was manually specified, switch to the AP's current channel */
-					if(!get_fixed_channel() && get_auto_channel_select() && channel > 0 && channel != get_channel())
+					if(!(get_fixed_channel()) && (get_auto_channel_select()) && ((channel > 0 && channel != get_channel()))
 					{
 						change_channel(channel);
 						set_channel(channel);
 					}
-
+                                        cprintf(ERROR, " Channel Specified Manually\n");
                                        	break;
 				}
 			}
